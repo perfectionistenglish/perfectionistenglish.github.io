@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Öğretmen Raporu — Kelime Hafıza Pratiği</title>
+<style>
+  :root{
+    --green:#1d5b3a;
+    --blue:#1c3f6e;
+    --red:#9c2b2b;
+    --ink:#222;
+    --paper:#fffdf9;
+    --line:#d8d2c4;
+    --ok:#1c8a45;
+    --bad:#c0392b;
+    --mid:#b8860b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f3efe6;
+    color:var(--ink);
+  }
+  header{
+    background:var(--paper);
+    padding:28px 24px 22px;
+    border-bottom:4px solid var(--blue);
+    text-align:center;
+  }
+  header h1{
+    font-family:Georgia,serif;
+    font-size:1.8rem;
+    margin:0 0 6px;
+    color:var(--blue);
+  }
+  header p{ margin:0; color:#666; font-size:0.9rem; }
+
+  main{
+    max-width:1040px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+
+  .toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .toolbar button{
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    padding:8px 16px;
+    border-radius:6px;
+    font-size:0.85rem;
+    cursor:pointer;
+  }
+  .toolbar button:hover{ background:#142d4e; }
+  .toolbar .count{ color:#555; font-size:0.9rem; }
+
+  .summary-cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:12px;
+    margin-bottom:24px;
+  }
+  .scard{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px;
+    text-align:center;
+  }
+  .scard .num{ font-size:1.7rem; font-weight:bold; color:var(--green); }
+  .scard .lbl{ font-size:0.78rem; color:#777; text-transform:uppercase; letter-spacing:0.5px; margin-top:4px;}
+
+  .charts-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-bottom:28px;
+  }
+  @media (max-width:760px){ .charts-row{ grid-template-columns:1fr; } }
+
+  .chart-card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:18px 20px;
+  }
+  .chart-card h3{
+    margin:0 0 14px;
+    font-size:0.95rem;
+    color:var(--blue);
+    font-family:Georgia,serif;
+  }
+  .bar-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+    font-size:0.85rem;
+  }
+  .bar-row .barlabel{ width:120px; flex-shrink:0; color:#444; }
+  .bar-row .bartrack{
+    flex:1;
+    background:#eee;
+    border-radius:5px;
+    height:16px;
+    overflow:hidden;
+    position:relative;
+  }
+  .bar-row .barfill{
+    height:100%;
+    border-radius:5px;
+  }
+  .bar-row .barval{ width:48px; text-align:right; color:#555; flex-shrink:0; }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  thead th{
+    background:var(--blue);
+    color:#fff;
+    text-align:left;
+    padding:10px 12px;
+    font-size:0.82rem;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+  }
+  tbody td{
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+    font-size:0.92rem;
+    vertical-align:top;
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background:#faf7f0; }
+  .scoreCell{ font-weight:bold; }
+  .scoreCell.high{ color:var(--ok); }
+  .scoreCell.mid{ color:var(--mid); }
+  .scoreCell.low{ color:var(--bad); }
+  .detailBtn, .pdfBtn{
+    background:none;
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:4px 10px;
+    font-size:0.78rem;
+    cursor:pointer;
+    color:var(--blue);
+    margin-right:4px;
+  }
+  .pdfBtn{ color:var(--green); border-color:#bcd6c6; }
+  .detailBtn:hover{ background:#eef2f8; }
+  .pdfBtn:hover{ background:#eef6f0; }
+
+  .empty{
+    text-align:center;
+    padding:60px 20px;
+    color:#888;
+    font-style:italic;
+  }
+
+  #detailModal{
+    position:fixed;
+    inset:0;
+    background:rgba(30,30,25,0.78);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:200;
+    padding:20px;
+  }
+  #detailModal .card{
+    background:var(--paper);
+    border-radius:10px;
+    padding:26px 24px;
+    max-width:560px;
+    width:100%;
+    max-height:84vh;
+    overflow-y:auto;
+  }
+  #detailModal h3{ margin:0 0 4px; color:var(--blue); font-family:Georgia,serif; }
+  #detailModal .sub{ color:#777; font-size:0.85rem; margin-bottom:16px; }
+  #detailModal .group-title{ font-weight:bold; font-size:0.85rem; margin:14px 0 6px; color:#444; }
+  #detailModal table.miniq{ width:100%; font-size:0.82rem; border-collapse:collapse; }
+  #detailModal table.miniq td{ padding:4px 6px; border-bottom:1px solid #eee; }
+  #detailModal .ok{ color:var(--ok); }
+  #detailModal .no{ color:var(--bad); }
+  #detailModal button{
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    padding:8px 18px;
+    border-radius:6px;
+    font-size:0.85rem;
+    cursor:pointer;
+    margin-top:16px;
+  }
+
+  footer{
+    text-align:center;
+    padding:20px;
+    color:#999;
+    font-size:0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Öğretmen Raporu</h1>
+  <p>Kelime Hafıza Pratiği · 2026-06-17</p>
+</header>
+
+<main>
+  <div class="toolbar">
+    <span class="count" id="resultCount">Yükleniyor...</span>
+    <button onclick="loadResults()">Yenile</button>
+  </div>
+
+  <div class="summary-cards" id="summaryCards"></div>
+
+  <div class="charts-row">
+    <div class="chart-card">
+      <h3>Bölüm Bazında Sınıf Başarısı</h3>
+      <div id="sectionChart"></div>
+    </div>
+    <div class="chart-card">
+      <h3>En Çok Hata Yapılan 10 Kelime</h3>
+      <div id="missChart"></div>
+    </div>
+  </div>
+
+  <div id="tableWrap"></div>
+</main>
+
+<div id="detailModal">
+  <div class="card">
+    <h3 id="detailName"></h3>
+    <div class="sub" id="detailMeta"></div>
+    <div id="detailBody"></div>
+    <button onclick="closeDetail()">Kapat</button>
+  </div>
+</div>
+
+<footer>Perfectionist English — Öğretmen Paneli</footer>
+
+<script>
+const EXERCISE_ID = "2026-06-17";
+let allResults = [];
+
+/* word/letter labels so charts read naturally rather than raw keys */
+const WORD_LABELS = {
+  "m1-1":"cap","m1-2":"nab","m1-3":"nag","m1-4":"ad","m1-5":"sad","m1-6":"cam","m1-7":"sag","m1-8":"rat",
+  "m1-9":"ram","m1-10":"rag","m1-11":"rap","m1-12":"wag","m1-13":"cab","m1-14":"hat","m1-15":"ham","m1-16":"nap",
+  "m1-17":"tab","m1-18":"tad","m1-19":"tag","m1-20":"tan","m1-21":"tap","m1-22":"fan","m1-23":"fad","m1-24":"fat",
+  "m1-25":"pad","m1-26":"pat","m1-27":"pal","m1-28":"yap","m1-29":"bam","m1-30":"ban","m1-31":"bat","m1-32":"yam",
+  "m1-33":"mat","m1-34":"mad","m1-35":"map","m1-36":"van","m1-37":"vat","m1-38":"dab","m1-39":"dad","m1-40":"dam",
+  "m1-41":"gab","m1-42":"gag","m1-43":"gal","m1-44":"gap","m1-45":"gas","m1-46":"jab","m1-47":"jam","m1-48":"lab",
+  "m1-49":"lad","m1-50":"lag","m1-51":"lap","m1-52":"pan",
+  "f-1":"cap","f-2":"nab","f-3":"nag","f-4":"ad","f-5":"sad","f-6":"cam","f-7":"sag","f-8":"rat","f-9":"ram","f-10":"rag",
+  "f-11":"rap","f-12":"wag","f-13":"cab","f-14":"hat","f-15":"ham","f-16":"nap","f-17":"tab","f-18":"tad","f-19":"tag","f-20":"tan",
+  "f-21":"tap","f-22":"fan","f-23":"fad","f-24":"fat","f-25":"pad","f-26":"pat","f-27":"pal","f-28":"yap","f-29":"bam","f-30":"ban",
+  "f-31":"bat","f-32":"yam","f-33":"mat","f-34":"mad","f-35":"map","f-36":"van","f-37":"vat","f-38":"dab","f-39":"dad","f-40":"dam",
+  "f-41":"gab","f-42":"gag","f-43":"gal","f-44":"gap","f-45":"gas","f-46":"jab","f-47":"jam","f-48":"lab","f-49":"lad","f-50":"lag",
+  "f-51":"lap","f-52":"pan",
+  "q-1":"cap","q-2":"nab","q-3":"nag","q-4":"ad","q-5":"sad","q-6":"cam","q-7":"sag","q-8":"rat","q-9":"ram","q-10":"rag",
+  "q-11":"rap","q-12":"wag","q-13":"cab","q-14":"hat","q-15":"ham","q-16":"nap","q-17":"tab","q-18":"tad","q-19":"tag","q-20":"tan",
+  "q-21":"tap","q-22":"fan","q-23":"fad","q-24":"fat","q-25":"pad","q-26":"pat","q-27":"pal","q-28":"yap","q-29":"bam","q-30":"ban",
+  "q-31":"bat","q-32":"yam","q-33":"mat","q-34":"mad","q-35":"map","q-36":"van","q-37":"vat","q-38":"dab","q-39":"dad","q-40":"dam",
+  "q-41":"gab","q-42":"gag","q-43":"gal","q-44":"gap","q-45":"gas","q-46":"jab","q-47":"jam","q-48":"lab","q-49":"lad","q-50":"lag",
+  "q-51":"lap","q-52":"pan"
+};
+
+function keyLabel(key){
+  const [prefix, numStr] = key.split('-');
+  const sectionName = prefix === 'm1' ? "Bölüm 1" : prefix === 'f' ? "Bölüm 2" : "Bölüm 3";
+  const word = WORD_LABELS[key] || "";
+  return sectionName + ", Soru " + numStr + " (" + word + ")";
+}
+
+/* ================= GOOGLE SHEETS CONFIG =================
+   Replace this URL with your own sheet's "Publish to web > CSV" link.
+   Instructions: open the Google Sheet linked to your Form's Responses tab,
+   File > Share > Publish to web > select the response sheet > CSV > Publish,
+   then paste the resulting link below.
+*/
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTxGo9jbC8kJIy1PpaRwYCEtnVoZkc5nPcqAoEfsLOOjC1VZEPjjFXxsvlhxQ5hMuODVQk_laoWJgHJ/pub?gid=1371721830&single=true&output=csv";
+
+function parseCSV(text){
+  // Simple CSV parser that handles quoted fields containing commas/newlines.
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; }
+        else { inQuotes = false; }
+      } else {
+        field += c;
+      }
+    } else {
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else if(c === '\r'){ /* skip */ }
+      else { field += c; }
+    }
+  }
+  if(field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+async function loadResults(){
+  document.getElementById('resultCount').textContent = "Yükleniyor...";
+
+  if(!SHEET_CSV_URL || SHEET_CSV_URL.indexOf("PASTE_YOUR") === 0){
+    document.getElementById('resultCount').textContent = "Sheet bağlantısı henüz ayarlanmadı.";
+    document.getElementById('tableWrap').innerHTML = '<div class="empty">Google Sheets CSV linki rapor.html dosyasında henüz girilmemiş.</div>';
+    return;
+  }
+
+  try{
+    const res = await fetch(SHEET_CSV_URL);
+    if(!res.ok) throw new Error("Sheet fetch failed: " + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if(rows.length < 2){
+      allResults = [];
+      renderEmpty();
+      return;
+    }
+    // Expected columns (in order): Timestamp, Öğrenci Adı, Toplam Doğru Sayısı, Bölüm Bazlı Sonuçlar, Detaylı Cevaplar
+    const dataRows = rows.slice(1).filter(r => r.length >= 5 && r[1] && r[1].trim() !== '');
+    const records = dataRows.map(r => {
+      const timestamp = r[0];
+      const name = r[1];
+      const totalCorrectRaw = r[2]; // "x / 52"
+      let sectionStats = {1:{correct:0,total:0},2:{correct:0,total:0},3:{correct:0,total:0}};
+      let perQuestion = [];
+      let missedWords = [];
+      try{ sectionStats = JSON.parse(r[3]); } catch(e){}
+      try{
+        const detail = JSON.parse(r[4]);
+        perQuestion = detail.perQuestion || [];
+        missedWords = detail.missedWords || [];
+      } catch(e){}
+      const totalCorrect = parseInt((totalCorrectRaw || "0").split('/')[0].trim(), 10) || 0;
+      return {
+        studentName: name,
+        totalQuestions: 52,
+        totalCorrect: totalCorrect,
+        sectionStats: sectionStats,
+        perQuestion: perQuestion,
+        missedWords: missedWords,
+        submittedAt: timestamp
+      };
+    });
+
+    const latestByStudent = {};
+    records.forEach(r => {
+      const k = r.studentName.toLowerCase();
+      if(!latestByStudent[k] || new Date(r.submittedAt) > new Date(latestByStudent[k].submittedAt)){
+        latestByStudent[k] = r;
+      }
+    });
+    allResults = Object.values(latestByStudent).sort((a,b) => b.totalCorrect - a.totalCorrect);
+
+    if(allResults.length === 0){
+      renderEmpty();
+    } else {
+      renderResults();
+    }
+  } catch(err){
+    document.getElementById('resultCount').textContent = "Sonuçlar yüklenemedi.";
+    document.getElementById('tableWrap').innerHTML = '<div class="empty">Bir hata oluştu (' + err.message + '). Lütfen Sheet linkinin doğru ve herkese açık yayınlandığından emin olun.</div>';
+  }
+}
+
+function renderEmpty(){
+  document.getElementById('resultCount').textContent = "0 öğrenci tamamladı";
+  document.getElementById('summaryCards').innerHTML = '';
+  document.getElementById('sectionChart').innerHTML = '<p style="color:#999;font-size:0.85rem;">Veri yok</p>';
+  document.getElementById('missChart').innerHTML = '<p style="color:#999;font-size:0.85rem;">Veri yok</p>';
+  document.getElementById('tableWrap').innerHTML = '<div class="empty">Henüz hiçbir öğrenci alıştırmayı tamamlamadı.</div>';
+}
+
+function scoreClass(score, total){
+  const pct = score / total;
+  if(pct >= 0.8) return 'high';
+  if(pct >= 0.5) return 'mid';
+  return 'low';
+}
+function barColor(pct){
+  if(pct >= 0.8) return '#1c8a45';
+  if(pct >= 0.5) return '#b8860b';
+  return '#c0392b';
+}
+
+function renderResults(){
+  document.getElementById('resultCount').textContent = allResults.length + " öğrenci tamamladı";
+
+  const avg = allResults.reduce((s,r) => s + r.totalCorrect, 0) / allResults.length;
+  const perfect = allResults.filter(r => r.totalCorrect === r.totalQuestions).length;
+  const lowest = Math.min(...allResults.map(r => r.totalCorrect));
+
+  document.getElementById('summaryCards').innerHTML = `
+    <div class="scard"><div class="num">${allResults.length}</div><div class="lbl">Tamamlayan Öğrenci</div></div>
+    <div class="scard"><div class="num">${avg.toFixed(1)} / 52</div><div class="lbl">Sınıf Ortalaması</div></div>
+    <div class="scard"><div class="num">${perfect}</div><div class="lbl">Tam Puan (52/52)</div></div>
+    <div class="scard"><div class="num">${lowest} / 52</div><div class="lbl">En Düşük Puan</div></div>
+  `;
+
+  renderSectionChart();
+  renderMissChart();
+
+  let rows = allResults.map((r, idx) => `
+    <tr>
+      <td>${r.studentName}</td>
+      <td class="scoreCell ${scoreClass(r.totalCorrect, r.totalQuestions)}">${r.totalCorrect} / ${r.totalQuestions}</td>
+      <td>${r.sectionStats[1].correct}/${r.sectionStats[1].total} · ${r.sectionStats[2].correct}/${r.sectionStats[2].total} · ${r.sectionStats[3].correct}/${r.sectionStats[3].total}</td>
+      <td>${new Date(r.submittedAt).toLocaleString('tr-TR')}</td>
+      <td>
+        <button class="detailBtn" onclick="showDetail(${idx})">Detay</button>
+        <button class="pdfBtn" onclick="openPrintableReport(${idx})">PDF / Yazdır</button>
+      </td>
+    </tr>
+  `).join('');
+
+  document.getElementById('tableWrap').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Öğrenci</th>
+          <th>Toplam</th>
+          <th>Bölüm 1 · 2 · 3</th>
+          <th>Tarih</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function renderSectionChart(){
+  const totals = {1:{c:0,t:0}, 2:{c:0,t:0}, 3:{c:0,t:0}};
+  allResults.forEach(r => {
+    [1,2,3].forEach(s => {
+      totals[s].c += r.sectionStats[s].correct;
+      totals[s].t += r.sectionStats[s].total;
+    });
+  });
+  const labels = {1:"Bölüm 1 — Eşleştirme", 2:"Bölüm 2 — Boşluk Doldurma", 3:"Bölüm 3 — Çoktan Seçmeli"};
+  let html = '';
+  [1,2,3].forEach(s => {
+    const pct = totals[s].t > 0 ? totals[s].c / totals[s].t : 0;
+    html += `
+      <div class="bar-row">
+        <span class="barlabel">${labels[s]}</span>
+        <span class="bartrack"><span class="barfill" style="width:${(pct*100).toFixed(0)}%;background:${barColor(pct)};"></span></span>
+        <span class="barval">${(pct*100).toFixed(0)}%</span>
+      </div>
+    `;
+  });
+  document.getElementById('sectionChart').innerHTML = html;
+}
+
+function renderMissChart(){
+  const missCount = {};
+  allResults.forEach(r => {
+    (r.missedWords || []).forEach(key => {
+      missCount[key] = (missCount[key] || 0) + 1;
+    });
+  });
+  const sorted = Object.entries(missCount).sort((a,b) => b[1]-a[1]).slice(0,10);
+  if(sorted.length === 0){
+    document.getElementById('missChart').innerHTML = '<p style="color:#999;font-size:0.85rem;">Henüz hata kaydı yok.</p>';
+    return;
+  }
+  const maxCount = sorted[0][1];
+  let html = '';
+  sorted.forEach(([key,count]) => {
+    const pct = count / maxCount;
+    html += `
+      <div class="bar-row">
+        <span class="barlabel">${keyLabel(key)}</span>
+        <span class="bartrack"><span class="barfill" style="width:${(pct*100).toFixed(0)}%;background:#9c2b2b;"></span></span>
+        <span class="barval">${count}</span>
+      </div>
+    `;
+  });
+  document.getElementById('missChart').innerHTML = html;
+}
+
+function showDetail(idx){
+  const r = allResults[idx];
+  document.getElementById('detailName').textContent = r.studentName;
+  document.getElementById('detailMeta').textContent =
+    r.totalCorrect + " / " + r.totalQuestions + " doğru · " + new Date(r.submittedAt).toLocaleString('tr-TR');
+
+  const rowsHtml = r.perQuestion.map(q => `
+    <tr>
+      <td>${keyLabel(q.key)}</td>
+      <td>${q.given || '<span style="color:#bbb;">(boş)</span>'}</td>
+      <td>${q.correct}</td>
+      <td class="${q.isCorrect ? 'ok' : 'no'}">${q.isCorrect ? '✓' : '✗'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('detailBody').innerHTML = `
+    <table class="miniq">
+      <tr><td><b>Soru</b></td><td><b>Verilen</b></td><td><b>Doğru</b></td><td><b>Sonuç</b></td></tr>
+      ${rowsHtml}
+    </table>
+  `;
+  document.getElementById('detailModal').style.display = 'flex';
+}
+function closeDetail(){
+  document.getElementById('detailModal').style.display = 'none';
+}
+
+/* ================= PRINTABLE PER-STUDENT REPORT (PDF via browser print) ================= */
+function openPrintableReport(idx){
+  const r = allResults[idx];
+  const pct = (r.totalCorrect / r.totalQuestions * 100).toFixed(0);
+
+  const sectionRows = [1,2,3].map(s => {
+    const labelMap = {1:"Bölüm 1 — Eşleştirme", 2:"Bölüm 2 — Boşluk Doldurma", 3:"Bölüm 3 — Çoktan Seçmeli"};
+    const stat = r.sectionStats[s];
+    const spct = stat.total > 0 ? (stat.correct/stat.total*100).toFixed(0) : 0;
+    return `
+      <tr>
+        <td>${labelMap[s]}</td>
+        <td>${stat.correct} / ${stat.total}</td>
+        <td>
+          <div style="background:#eee;border-radius:5px;height:14px;width:200px;overflow:hidden;display:inline-block;vertical-align:middle;">
+            <div style="background:${barColor(spct/100)};height:100%;width:${spct}%;"></div>
+          </div>
+          <span style="margin-left:8px;">${spct}%</span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const missedRows = r.perQuestion.filter(q => !q.isCorrect).map(q => `
+    <tr>
+      <td>${keyLabel(q.key)}</td>
+      <td>${q.given || '(boş bırakıldı)'}</td>
+      <td>${q.correct}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="3" style="color:#888;">Hiç hata yok — tebrikler!</td></tr>';
+
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+    <meta charset="UTF-8">
+    <title>${r.studentName} — Kelime Hafıza Pratiği Raporu</title>
+    <style>
+      body{ font-family: Arial, Helvetica, sans-serif; color:#222; padding:40px; max-width:760px; margin:0 auto; }
+      h1{ color:#1c3f6e; font-family: Georgia, serif; margin-bottom:4px; }
+      .sub{ color:#666; font-size:0.9rem; margin-bottom:24px; }
+      .scorebox{ background:#f3efe6; border:1px solid #d8d2c4; border-radius:8px; padding:18px 22px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; }
+      .scorebox .big{ font-size:2.2rem; font-weight:bold; color:#1d5b3a; }
+      table{ width:100%; border-collapse:collapse; margin-bottom:28px; }
+      th{ background:#1c3f6e; color:#fff; text-align:left; padding:8px 10px; font-size:0.85rem; }
+      td{ padding:7px 10px; border-bottom:1px solid #e2ddd0; font-size:0.88rem; }
+      h2{ font-size:1.1rem; color:#1c3f6e; border-bottom:2px solid #d8d2c4; padding-bottom:6px; margin-top:30px; }
+      .footer-note{ color:#999; font-size:0.78rem; text-align:center; margin-top:40px; }
+      @media print{ body{ padding:10px; } }
+    </style>
+    </head>
+    <body>
+      <h1>Kelime Hafıza Pratiği — Sonuç Raporu</h1>
+      <div class="sub">Öğrenci: <b>${r.studentName}</b> · Alıştırma Tarihi: 2026-06-17 · Gönderim: ${new Date(r.submittedAt).toLocaleString('tr-TR')}</div>
+
+      <div class="scorebox">
+        <div>
+          <div style="font-size:0.85rem;color:#666;">Toplam Doğru</div>
+          <div class="big">${r.totalCorrect} / ${r.totalQuestions}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.85rem;color:#666;">Başarı Oranı</div>
+          <div style="font-size:1.6rem;font-weight:bold;color:${barColor(pct/100)};">%${pct}</div>
+        </div>
+      </div>
+
+      <h2>Bölüm Bazında Performans</h2>
+      <table>
+        <tr><th>Bölüm</th><th>Doğru / Toplam</th><th>Yüzde</th></tr>
+        ${sectionRows}
+      </table>
+
+      <h2>Hatalı veya Boş Bırakılan Sorular</h2>
+      <table>
+        <tr><th>Soru</th><th>Öğrencinin Cevabı</th><th>Doğru Cevap</th></tr>
+        ${missedRows}
+      </table>
+
+      <div class="footer-note">Perfectionist English — bu rapor öğretmen tarafından oluşturulmuştur.</div>
+
+      <scr${''}ipt>
+        window.onload = function(){ window.print(); };
+      </scr${''}ipt>
+    </body>
+    </html>
+  `);
+  win.document.close();
+}
+
+loadResults();
+</script>
+
+</body>
+</html>
