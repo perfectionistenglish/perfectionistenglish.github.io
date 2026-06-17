@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kelime Hafıza Pratiği — İnteraktif</title>
+<style>
+  :root{
+    --green:#1d5b3a;
+    --green-light:#e8f3ec;
+    --blue:#1c3f6e;
+    --blue-light:#e8eef7;
+    --red:#9c2b2b;
+    --red-light:#fbeaea;
+    --ink:#222;
+    --paper:#fffdf9;
+    --line:#d8d2c4;
+    --ok:#1c8a45;
+    --bad:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Georgia','Times New Roman',serif;
+    background:#f3efe6;
+    color:var(--ink);
+    line-height:1.5;
+  }
+  header{
+    background:var(--paper);
+    padding:36px 24px 28px;
+    border-bottom:4px solid var(--green);
+    text-align:center;
+  }
+  header h1{
+    font-size:2.1rem;
+    margin:0 0 6px;
+    color:var(--green);
+    letter-spacing:0.5px;
+  }
+  header p{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#555;
+    font-size:0.95rem;
+  }
+  .meta{
+    font-family:Arial,sans-serif;
+    font-size:0.85rem;
+    color:#777;
+    margin-top:10px;
+  }
+  .scorebar{
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:#fff;
+    border-bottom:2px solid var(--line);
+    padding:10px 20px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:18px;
+    font-family:Arial,sans-serif;
+    font-size:0.95rem;
+    box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  }
+  .scorebar strong{ color:var(--green); font-size:1.1rem; }
+  .resetBtn{
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    padding:7px 16px;
+    border-radius:5px;
+    font-family:Arial,sans-serif;
+    font-size:0.85rem;
+    cursor:pointer;
+  }
+  .resetBtn:hover{ background:#142d4e; }
+
+  main{
+    max-width:1000px;
+    margin:0 auto;
+    padding:30px 20px 80px;
+  }
+  section.block{
+    background:var(--paper);
+    border-radius:8px;
+    margin-bottom:36px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08);
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .block-head{
+    padding:16px 24px;
+    color:#fff;
+    font-family:Arial,sans-serif;
+  }
+  .block1 .block-head{ background:var(--green); }
+  .block2 .block-head{ background:var(--blue); }
+  .block3 .block-head{ background:var(--red); }
+  .block-head .tag{
+    font-size:0.75rem;
+    letter-spacing:1px;
+    opacity:0.85;
+    display:block;
+    margin-bottom:2px;
+  }
+  .block-head h2{
+    margin:0;
+    font-family:Georgia,serif;
+    font-size:1.4rem;
+  }
+  .block-body{ padding:22px 24px; }
+  .sub-instr{
+    font-family:Arial,sans-serif;
+    font-size:0.88rem;
+    color:#666;
+    font-style:italic;
+    margin:0 0 18px;
+  }
+  .part-title{
+    font-family:Arial,sans-serif;
+    font-weight:bold;
+    color:#444;
+    font-size:0.85rem;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin:22px 0 10px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:4px;
+  }
+
+  /* Bölüm 1 - matching */
+  .match-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+    gap:8px 22px;
+  }
+  .match-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:Arial,sans-serif;
+    padding:4px 0;
+  }
+  .match-row .num{
+    color:var(--green);
+    font-weight:bold;
+    width:24px;
+    font-size:0.9rem;
+  }
+  .match-row .word{
+    font-weight:bold;
+    width:48px;
+    font-size:0.97rem;
+  }
+  .match-row input{
+    width:36px;
+    text-align:center;
+    text-transform:uppercase;
+    border:2px solid var(--line);
+    border-radius:4px;
+    padding:5px 2px;
+    font-family:Arial,sans-serif;
+    font-weight:bold;
+    font-size:0.95rem;
+  }
+  .match-row .feedback{
+    width:22px;
+    font-size:1.1rem;
+    text-align:center;
+  }
+  .bank{
+    background:var(--green-light);
+    border:1px solid #bcd6c6;
+    border-radius:6px;
+    padding:14px 18px;
+    margin-top:18px;
+    font-family:Arial,sans-serif;
+    font-size:0.88rem;
+  }
+  .bank-title{
+    font-weight:bold;
+    color:var(--green);
+    margin-bottom:8px;
+    font-size:0.8rem;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .bank-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:4px 16px;
+  }
+  .bank-grid div{ padding:2px 0; }
+  .bank-grid b{ color:var(--green); margin-right:6px; }
+
+  /* Bölüm 2 - fill in blank */
+  .fib-row{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    font-family:Arial,sans-serif;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .fib-row .num{ color:var(--blue); font-weight:bold; min-width:26px; }
+  .fib-row .sentence{ flex:1; min-width:260px; }
+  .fib-row input{
+    width:80px;
+    text-align:center;
+    border:2px solid var(--line);
+    border-radius:4px;
+    padding:4px 4px;
+    font-family:Arial,sans-serif;
+    font-size:0.95rem;
+  }
+  .fib-row .feedback{ font-size:1.05rem; width:20px; text-align:center; }
+  .wordbank2{
+    background:var(--blue-light);
+    border:1px solid #b9c9e0;
+    border-radius:6px;
+    padding:12px 18px;
+    margin-bottom:18px;
+    font-family:Arial,sans-serif;
+    font-size:0.88rem;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 18px;
+  }
+  .wordbank2 span{
+    background:#fff;
+    border:1px solid #b9c9e0;
+    border-radius:4px;
+    padding:3px 10px;
+    font-weight:bold;
+    color:var(--blue);
+  }
+
+  /* Bölüm 3 - MCQ */
+  .mcq{
+    font-family:Arial,sans-serif;
+    margin-bottom:20px;
+    padding-bottom:14px;
+    border-bottom:1px dashed var(--line);
+  }
+  .mcq:last-child{ border-bottom:none; }
+  .mcq .q{ margin-bottom:8px; }
+  .mcq .q .num{ color:var(--red); font-weight:bold; }
+  .options{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 18px;
+  }
+  .opt-label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    padding:5px 10px;
+    border:2px solid var(--line);
+    border-radius:6px;
+    transition:background 0.15s, border-color 0.15s;
+  }
+  .opt-label input{ cursor:pointer; }
+  .opt-label.correct{ background:#e3f6e9; border-color:var(--ok); }
+  .opt-label.wrong{ background:#fbe7e5; border-color:var(--bad); }
+  .mcq .feedback{ margin-left:8px; font-size:1.05rem; }
+
+  .progress-mini{
+    font-family:Arial,sans-serif;
+    font-size:0.82rem;
+    color:#888;
+    text-align:right;
+    margin-top:-4px;
+    margin-bottom:14px;
+  }
+
+  footer{
+    text-align:center;
+    padding:24px;
+    font-family:Arial,sans-serif;
+    font-size:0.8rem;
+    color:#999;
+  }
+
+  @media (max-width:600px){
+    header h1{ font-size:1.5rem; }
+    .scorebar{ flex-wrap:wrap; gap:10px; font-size:0.85rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Kelime Hafıza Pratiği</h1>
+  <p>52 Kelime · 3 Bölümlü İnteraktif Alıştırma Seti</p>
+  <div class="meta">Doğru harfi kutuya yazınca otomatik kontrol edilir — doğruysa ✅, yanlışsa ❌</div>
+</header>
+
+<div class="scorebar">
+  <span>Toplam Doğru: <strong id="scoreCount">0</strong> / 52</span>
+  <button class="resetBtn" onclick="resetAll()">Sıfırla</button>
+</div>
+
+<main>
+
+  <!-- ============ BÖLÜM 1 ============ -->
+  <section class="block block1" id="section1">
+    <div class="block-head">
+      <span class="tag">BÖLÜM 1 · EŞLEŞTİRME</span>
+      <h2>Kelime ile Anlamı Eşleştir</h2>
+    </div>
+    <div class="block-body">
+      <p class="sub-instr">Soldaki kelimeyi oku. Doğru Türkçe anlamın harfini kutuya yaz.</p>
+
+      <div class="part-title">1/3 — Kelimeler 1–18</div>
+      <div class="match-grid" id="match1"></div>
+      <div class="bank">
+        <div class="bank-title">Türkçe Anlamları</div>
+        <div class="bank-grid" id="bank1"></div>
+      </div>
+
+      <div class="part-title">2/3 — Kelimeler 19–36</div>
+      <div class="match-grid" id="match2"></div>
+      <div class="bank">
+        <div class="bank-title">Türkçe Anlamları</div>
+        <div class="bank-grid" id="bank2"></div>
+      </div>
+
+      <div class="part-title">3/3 — Kelimeler 37–52</div>
+      <div class="match-grid" id="match3"></div>
+      <div class="bank">
+        <div class="bank-title">Türkçe Anlamları</div>
+        <div class="bank-grid" id="bank3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BÖLÜM 2 ============ -->
+  <section class="block block2" id="section2">
+    <div class="block-head">
+      <span class="tag">BÖLÜM 2 · BOŞLUK DOLDURMA</span>
+      <h2>Cümleleri Tamamla</h2>
+    </div>
+    <div class="block-body">
+      <p class="sub-instr">Cümleyi oku. Kelime havuzundan doğru kelimeyi kutuya yaz.</p>
+      <div id="fib-container"></div>
+    </div>
+  </section>
+
+  <!-- ============ BÖLÜM 3 ============ -->
+  <section class="block block3" id="section3">
+    <div class="block-head">
+      <span class="tag">BÖLÜM 3 · ÇOKTAN SEÇMELİ</span>
+      <h2>Doğru Kelimeyi Seç</h2>
+    </div>
+    <div class="block-body">
+      <p class="sub-instr">Cümleyi oku. Boşluğa en uygun kelimeyi seç.</p>
+      <div id="mcq-container"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Perfectionist English — Kelime Hafıza Pratiği (İnteraktif Sürüm)</footer>
+
+<script>
+/* ================= DATA ================= */
+
+// Bölüm 1 — matching data: [number, word, correctLetter]
+const matchSet1 = [
+  [1,"cap","H"],[2,"nab","P"],[3,"nag","I"],[4,"ad","A"],[5,"sad","L"],
+  [6,"cam","O"],[7,"sag","J"],[8,"rat","E"],[9,"ram","F"],[10,"rag","G"],
+  [11,"rap","B"],[12,"wag","C"],[13,"cab","N"],[14,"hat","D"],[15,"ham","K"],
+  [16,"nap","Q"],[17,"tab","R"],[18,"tad","M"]
+];
+const bankSet1 = {
+  A:"İlan, reklam", B:"Hafifçe vurmak / rap müzik", C:"Kuyruk sallamak", D:"Şapka",
+  E:"Sıçan, büyük fare", F:"Koç / vurmak (toslamak)", G:"Paçavra, eski bez", H:"Şapka (kep)",
+  I:"Dırdır etmek", J:"Sarkmak, çökmek", K:"Jambon", L:"Üzgün",
+  M:"Birazcık, azıcık", N:"Taksi", O:"Kamera", P:"Enselemek, yakalamak",
+  Q:"Şekerleme, kısa uyku", R:"Sekme / fiş / etiket"
+};
+
+const matchSet2 = [
+  [19,"tag","D"],[20,"tan","I"],[21,"tap","M"],[22,"fan","K"],[23,"fad","J"],
+  [24,"fat","H"],[25,"pad","G"],[26,"pat","F"],[27,"pal","E"],[28,"yap","O"],
+  [29,"bam","L"],[30,"ban","N"],[31,"bat","Q"],[32,"yam","P"],[33,"mat","C"],
+  [34,"mad","A"],[35,"map","R"],[36,"van","B"]
+];
+const bankSet2 = {
+  A:"Kızgın / deli", B:"Panelvan, minibüs", C:"Paspas, minder", D:"Etiket / ebelemece oyunu",
+  E:"Arkadaş, dost", F:"Hafifçe dokunmak", G:"Ped / defter / yastıkçık", H:"Şişman",
+  I:"Bronz / taba rengi", J:"Geçici heves, moda", K:"Yelpaze / vantilatör / taraftar", L:"Güm (yansıma ses)",
+  M:"Musluk / hafifçe vurmak", N:"Yasaklamak", O:"Havlamak (viyaklamak)", P:"Tatlı patates",
+  Q:"Yarasa / sopa", R:"Harita"
+};
+
+const matchSet3 = [
+  [37,"vat","A"],[38,"dab","H"],[39,"dad","K"],[40,"dam","B"],[41,"gab","J"],
+  [42,"gag","C"],[43,"gal","F"],[44,"gap","G"],[45,"gas","O"],[46,"jab","N"],
+  [47,"jam","M"],[48,"lab","E"],[49,"lad","I"],[50,"lag","L"],[51,"lap","D"],[52,"pan","P"]
+];
+const bankSet3 = {
+  A:"Varil, büyük fıçı", B:"Baraj", C:"Şaka / ağız tıkacı", D:"Diz / tur (koşuda)",
+  E:"Laboratuvar", F:"Kız, hatun (argo)", G:"Boşluk, fark", H:"Hafifçe dokunmak",
+  I:"Delikanlı, genç oğlan", J:"Boş konuşmak, çene çalmak", K:"Baba", L:"Gecikmek, geride kalmak",
+  M:"Reçel / sıkışıklık", N:"Dürtmek, batırmak", O:"Gaz / benzin", P:"Tava"
+};
+
+// Bölüm 2 — fill in the blank: [number, sentenceWithBlankMarked as __, correctWord]
+const fibData = [
+  [1,"He puts on his red ___ before he rides his bike.","cap"],
+  [2,"The police ran fast to ___ the thief.","nab"],
+  [3,"Please stop! Do not ___ me about my homework.","nag"],
+  [4,"I saw an ___ for a new phone on TV.","ad"],
+  [5,"She felt ___ when her friend moved away.","sad"],
+  [6,"He used his ___ to take a photo of the dog.","cam"],
+  [7,"The old shelf will ___ if you put too many books on it.","sag"],
+  [8,"A gray ___ ran across the kitchen floor.","rat"],
+  [9,"The car will ___ into the wall if he does not stop.","ram"],
+  [10,"He cleaned the table with an old ___.","rag"],
+
+  [11,"I heard a ___ on the door, so I opened it.","rap"],
+  [12,"The dog will ___ its tail when it is happy.","wag"],
+  [13,"We took a yellow ___ to the airport.","cab"],
+  [14,"She wore a big ___ to the beach.","hat"],
+  [15,"He made a sandwich with cheese and ___.","ham"],
+  [16,"The baby takes a ___ every afternoon.","nap"],
+  [17,"Can I have the ___ please? I want to pay.","tab"],
+  [18,"Add just a ___ more salt to the soup.","tad"],
+  [19,"The kids played ___ in the park after school.","tag"],
+  [20,"Her skin got a nice ___ after the trip to the beach.","tan"],
+
+  [21,"Turn off the ___ when you finish washing your hands.","tap"],
+  [22,"Turn on the ___, it is hot in here.","fan"],
+  [23,"That toy was just a ___; nobody plays with it now.","fad"],
+  [24,"The ___ cat sleeps all day on the sofa.","fat"],
+  [25,"She wrote a note on a small ___ of paper.","pad"],
+  [26,"He gave the dog a gentle ___ on the head.","pat"],
+  [27,"He is my best ___ from school.","pal"],
+  [28,"The small dog will ___ at every car that passes.","yap"],
+  [29,"Bam! The door slammed shut in the wind.","bam"],
+  [30,"The school will ___ phones in the classroom.","ban"],
+
+  [31,"He hit the ball with a wooden ___.","bat"],
+  [32,"We ate baked ___ for dinner last night.","yam"],
+  [33,"Please wipe your shoes on the ___ before you come in.","mat"],
+  [34,"Dad got ___ when the dog ate his shoe.","mad"],
+  [35,"We used a ___ to find the museum.","map"],
+  [36,"The family packed their bags into the ___.","van"],
+  [37,"The farmer keeps milk in a big ___.","vat"],
+  [38,"She put a small ___ of paint on the wall.","dab"],
+  [39,"My ___ drives me to school every morning.","dad"],
+  [40,"The river flows into a large ___ near the city.","dam"],
+
+  [41,"The two friends like to ___ on the phone for hours.","gab"],
+  [42,"The comedian told a funny ___ on stage.","gag"],
+  [43,"That ___ over there is my cousin.","gal"],
+  [44,"There is a small ___ between the two desks.","gap"],
+  [45,"Dad stopped the car to buy some ___.","gas"],
+  [46,"He gave his brother a quick ___ in the arm.","jab"],
+  [47,"She put strawberry ___ on her toast.","jam"],
+  [48,"The scientist works in a ___ every day.","lab"],
+  [49,"A young ___ helped the old man cross the street.","lad"],
+  [50,"The slow runner began to ___ behind the group.","lag"],
+  [51,"The cat sat on her ___ and went to sleep.","lap"],
+  [52,"She fried the eggs in a hot ___.","pan"]
+];
+
+const wordBanks2 = [
+  ["nag","rat","sad","cap","cam","sag","ad","nab","rag","ram"],
+  ["ham","wag","rap","cab","tab","hat","nap","tan","tad","tag"],
+  ["pad","fan","fad","tap","bam","fat","yap","pal","pat","ban"],
+  ["vat","bat","mad","van","dab","mat","yam","dad","map","dam"],
+  ["jab","gas","gal","pan","lab","gag","jam","lad","lag","lap","gap","gab"]
+];
+
+// Bölüm 3 — MCQ: [number, sentenceWithBlank, [opt1,opt2,opt3,opt4], correctWord]
+const mcqData = [
+  [1,"He puts on his red ___ before he rides his bike.",["cab","cam","tap","cap"],"cap"],
+  [2,"The police ran fast to ___ the thief.",["tab","nag","lab","nab"],"nab"],
+  [3,"Please stop! Do not ___ me about my homework.",["nag","tag","gab","nab"],"nag"],
+  [4,"I saw an ___ for a new phone on TV.",["gab","ad","bad","dad"],"ad"],
+  [5,"She felt ___ when her friend moved away.",["fat","sad","tad","mad"],"sad"],
+  [6,"He used his ___ to take a photo of the dog.",["can","cam","cab","cap"],"cam"],
+  [7,"The old shelf will ___ if you put too many books on it.",["tag","wag","sag","nag"],"sag"],
+  [8,"A gray ___ ran across the kitchen floor.",["ram","rag","rat","bat"],"rat"],
+  [9,"The car will ___ into the wall if he does not stop.",["rat","ram","ham","jam"],"ram"],
+  [10,"He cleaned the table with an old ___.",["rap","rag","bag","tag"],"rag"],
+  [11,"I heard a ___ on the door, so I opened it.",["tap","rap","rag","lap"],"rap"],
+  [12,"The dog will ___ its tail when it is happy.",["wag","tag","sag","nag"],"wag"],
+  [13,"We took a yellow ___ to the airport.",["lab","cap","cab","cam"],"cab"],
+  [14,"She wore a big ___ to the beach.",["hut","mat","hat","ham"],"hat"],
+  [15,"He made a sandwich with cheese and ___.",["ram","jam","ham","yam"],"ham"],
+  [16,"The baby takes a ___ every afternoon.",["nab","nap","tap","lap"],"nap"],
+  [17,"Can I have the ___, please? I want to pay.",["tab","tag","tap","lab"],"tab"],
+  [18,"Add just a ___ more salt to the soup.",["tad","sad","tan","fad"],"tad"],
+  [19,"The kids played ___ in the park after school.",["tap","tag","tab","bag"],"tag"],
+  [20,"Her skin got a nice ___ after the trip to the beach.",["tab","tad","tan","fan"],"tan"],
+  [21,"Turn off the ___ when you finish washing your hands.",["tab","tag","tap","rap"],"tap"],
+  [22,"Turn on the ___, it is hot in here.",["tan","fad","van","fan"],"fan"],
+  [23,"That toy was just a ___; nobody plays with it now.",["bad","fat","fan","fad"],"fad"],
+  [24,"The ___ cat sleeps all day on the sofa.",["rat","hat","fad","fat"],"fat"],
+  [25,"She wrote a note on a small ___ of paper.",["pal","mad","pat","pad"],"pad"],
+  [26,"He gave the dog a gentle ___ on the head.",["pal","pad","bat","pat"],"pat"],
+  [27,"He is my best ___ from school.",["pat","pad","gal","pal"],"pal"],
+  [28,"The small dog will ___ at every car that passes.",["yap","lap","tap","nap"],"yap"],
+  [29,"___! The door slammed shut in the wind.",["dam","bam","bat","ban"],"bam"],
+  [30,"The school will ___ phones in the classroom.",["tan","ban","fan","bam"],"ban"],
+  [31,"He hit the ball with a wooden ___.",["bat","hat","bam","rat"],"bat"],
+  [32,"We ate baked ___ for dinner last night.",["jam","ram","yam","ham"],"yam"],
+  [33,"Please wipe your shoes on the ___ before you come in.",["mad","hat","mat","map"],"mat"],
+  [34,"Dad got ___ when the dog ate his shoe.",["mat","mad","bad","sad"],"mad"],
+  [35,"We used a ___ to find the museum.",["mat","map","cap","nap"],"map"],
+  [36,"The family packed their bags into the ___.",["van","ban","fan","tan"],"van"],
+  [37,"The farmer keeps milk in a big ___.",["vat","rat","van","bat"],"vat"],
+  [38,"She put a small ___ of paint on the wall.",["tad","dad","dab","tab"],"dab"],
+  [39,"My ___ drives me to school every morning.",["dab","bad","dad","dam"],"dad"],
+  [40,"The river flows into a large ___ near the city.",["dad","dam","dab","ram"],"dam"],
+  [41,"The two friends like to ___ on the phone for hours.",["gab","gag","nag","gal"],"gab"],
+  [42,"The comedian told a funny ___ on stage.",["gag","tag","gab","bag"],"gag"],
+  [43,"That ___ over there is my cousin.",["gal","gap","gab","pal"],"gal"],
+  [44,"There is a small ___ between the two desks.",["gal","gas","gap","cap"],"gap"],
+  [45,"Dad stopped the car to buy some ___.",["gap","gal","gas","vat"],"gas"],
+  [46,"He gave his brother a quick ___ in the arm.",["jab","jam","tab","dab"],"jab"],
+  [47,"She put strawberry ___ on her toast.",["yam","jab","ham","jam"],"jam"],
+  [48,"The scientist works in a ___ every day.",["lap","cab","lad","lab"],"lab"],
+  [49,"A young ___ helped the old man cross the street.",["lag","pad","lab","lad"],"lad"],
+  [50,"The slow runner began to ___ behind the group.",["lap","lad","tag","lag"],"lag"],
+  [51,"The cat sat on her ___ and went to sleep.",["lab","lag","nap","lap"],"lap"],
+  [52,"She fried the eggs in a hot ___.",["van","pad","pal","pan"],"pan"]
+];
+
+/* ================= STATE ================= */
+let correctCount = 0;
+const totalItems = 52;
+const answeredCorrectly = {}; // key -> true/false, prevents double counting
+
+function updateScore(){
+  let n = 0;
+  for(const k in answeredCorrectly){ if(answeredCorrectly[k]) n++; }
+  document.getElementById('scoreCount').textContent = n;
+}
+
+/* ================= RENDER: BÖLÜM 1 ================= */
+function renderMatchSet(containerId, data){
+  const container = document.getElementById(containerId);
+  data.forEach(([num, word, correct]) => {
+    const row = document.createElement('div');
+    row.className = 'match-row';
+    row.innerHTML = `
+      <span class="num">${num}.</span>
+      <span class="word">${word}</span>
+      <input type="text" maxlength="1" data-key="m1-${num}" data-correct="${correct}">
+      <span class="feedback" id="fb-m1-${num}"></span>
+    `;
+    container.appendChild(row);
+  });
+}
+function renderBank(containerId, bankObj){
+  const container = document.getElementById(containerId);
+  Object.keys(bankObj).forEach(letter => {
+    const div = document.createElement('div');
+    div.innerHTML = `<b>${letter}</b>${bankObj[letter]}`;
+    container.appendChild(div);
+  });
+}
+
+renderMatchSet('match1', matchSet1);
+renderBank('bank1', bankSet1);
+renderMatchSet('match2', matchSet2);
+renderBank('bank2', bankSet2);
+renderMatchSet('match3', matchSet3);
+renderBank('bank3', bankSet3);
+
+/* attach listeners for matching inputs */
+document.querySelectorAll('.match-row input').forEach(inp => {
+  inp.addEventListener('input', function(){
+    const key = this.dataset.key;
+    const correct = this.dataset.correct.toUpperCase();
+    const val = this.value.trim().toUpperCase();
+    const fb = document.getElementById('fb-' + key);
+    if(val === ''){
+      fb.textContent = '';
+      answeredCorrectly[key] = false;
+      updateScore();
+      return;
+    }
+    if(val === correct){
+      fb.textContent = '✅';
+      answeredCorrectly[key] = true;
+    } else {
+      fb.textContent = '❌';
+      answeredCorrectly[key] = false;
+    }
+    updateScore();
+  });
+});
+
+/* ================= RENDER: BÖLÜM 2 ================= */
+const fibContainer = document.getElementById('fib-container');
+const fibGroups = [
+  fibData.slice(0,10),
+  fibData.slice(10,20),
+  fibData.slice(20,30),
+  fibData.slice(30,40),
+  fibData.slice(40,52)
+];
+fibGroups.forEach((group, gi) => {
+  const title = document.createElement('div');
+  title.className = 'part-title';
+  title.textContent = `${gi+1}/5 — Cümleler ${group[0][0]}–${group[group.length-1][0]}`;
+  fibContainer.appendChild(title);
+
+  const bankDiv = document.createElement('div');
+  bankDiv.className = 'wordbank2';
+  bankDiv.innerHTML = '<span style="background:none;border:none;font-weight:bold;color:#1c3f6e;padding:3px 0;">Kelime Havuzu:</span>' +
+    wordBanks2[gi].map(w => `<span>${w}</span>`).join('');
+  fibContainer.appendChild(bankDiv);
+
+  group.forEach(([num, sentence, correct]) => {
+    const parts = sentence.split('___');
+    const row = document.createElement('div');
+    row.className = 'fib-row';
+    row.innerHTML = `
+      <span class="num">${num}.</span>
+      <span class="sentence">${parts[0]}<input type="text" data-key="f-${num}" data-correct="${correct}">${parts[1] || ''}</span>
+      <span class="feedback" id="fb-f-${num}"></span>
+    `;
+    fibContainer.appendChild(row);
+  });
+});
+
+document.querySelectorAll('.fib-row input').forEach(inp => {
+  inp.addEventListener('input', function(){
+    const key = this.dataset.key;
+    const correct = this.dataset.correct.toLowerCase();
+    const val = this.value.trim().toLowerCase();
+    const fb = document.getElementById('fb-' + key);
+    if(val === ''){
+      fb.textContent = '';
+      answeredCorrectly[key] = false;
+      updateScore();
+      return;
+    }
+    if(val === correct){
+      fb.textContent = '✅';
+      answeredCorrectly[key] = true;
+    } else {
+      fb.textContent = '❌';
+      answeredCorrectly[key] = false;
+    }
+    updateScore();
+  });
+});
+
+/* ================= RENDER: BÖLÜM 3 ================= */
+const mcqContainer = document.getElementById('mcq-container');
+mcqData.forEach(([num, sentence, options, correct]) => {
+  const parts = sentence.split('___');
+  const wrap = document.createElement('div');
+  wrap.className = 'mcq';
+  const letters = ['A','B','C','D'];
+  wrap.innerHTML = `
+    <div class="q"><span class="num">${num}.</span> ${parts[0]}<u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u>${parts[1] || ''}</div>
+    <div class="options" data-key="q-${num}" data-correct="${correct}">
+      ${options.map((opt,i) => `
+        <label class="opt-label" data-word="${opt}">
+          <input type="radio" name="q-${num}" value="${opt}">
+          ${letters[i]}) ${opt}
+        </label>
+      `).join('')}
+      <span class="feedback" id="fb-q-${num}"></span>
+    </div>
+  `;
+  mcqContainer.appendChild(wrap);
+});
+
+document.querySelectorAll('.options').forEach(optDiv => {
+  const key = optDiv.dataset.key;
+  const correct = optDiv.dataset.correct;
+  optDiv.querySelectorAll('input[type=radio]').forEach(radio => {
+    radio.addEventListener('change', function(){
+      const fb = document.getElementById('fb-' + key);
+      const labels = optDiv.querySelectorAll('.opt-label');
+      labels.forEach(l => l.classList.remove('correct','wrong'));
+      const chosenLabel = this.closest('.opt-label');
+      if(this.value === correct){
+        fb.textContent = '✅';
+        chosenLabel.classList.add('correct');
+        answeredCorrectly[key] = true;
+      } else {
+        fb.textContent = '❌';
+        chosenLabel.classList.add('wrong');
+        answeredCorrectly[key] = false;
+      }
+      updateScore();
+    });
+  });
+});
+
+/* ================= RESET ================= */
+function resetAll(){
+  if(!confirm('Tüm cevaplar silinsin mi?')) return;
+  document.querySelectorAll('.match-row input, .fib-row input').forEach(i => i.value = '');
+  document.querySelectorAll('.feedback').forEach(f => f.textContent = '');
+  document.querySelectorAll('input[type=radio]').forEach(r => r.checked = false);
+  document.querySelectorAll('.opt-label').forEach(l => l.classList.remove('correct','wrong'));
+  for(const k in answeredCorrectly) delete answeredCorrectly[k];
+  updateScore();
+}
+</script>
+
+</body>
+</html>
